@@ -145,8 +145,6 @@ var _ = { };
     })
   };
 
-dog['toUpperCase'].apply(dog,args);
-
 
   // Reduces an array or object to a single value by repetitively calling
   // iterator(previousValue, item) for each item. previousValue should be
@@ -162,6 +160,11 @@ dog['toUpperCase'].apply(dog,args);
   //     return total + number;
   //   }, 0); // should be 6
   _.reduce = function(collection, iterator, accumulator) {
+    var result = accumulator;
+    _.each(collection, function(item) {
+      result = iterator(result,item);
+    });
+    return result;
   };
 
   // Determine if the array or object contains a given value (using `===`).
@@ -180,12 +183,26 @@ dog['toUpperCase'].apply(dog,args);
   // Determine whether all of the elements match a truth test.
   _.every = function(collection, iterator) {
     // TIP: Try re-using reduce() here.
+    return _.reduce(collection, function(memo,item) {
+      // This accounts for lack of callback/iterator function
+      if (!iterator && memo ){
+        return memo;
+      }
+      if (!iterator(item)) {
+        return false;
+      }
+      return memo === false ? memo : true;
+    }, true);
   };
 
   // Determine whether any of the elements pass a truth test. If no iterator is
   // provided, provide a default one
   _.some = function(collection, iterator) {
+    iterator = iterator ? iterator : _.identity;
     // TIP: There's a very clever way to re-use every() here.
+    return !(_.every(collection, function(item) {
+      return !iterator(item);
+    }));
   };
 
 
@@ -208,11 +225,31 @@ dog['toUpperCase'].apply(dog,args);
   //     bla: "even more stuff"
   //   }); // obj1 now contains key1, key2, key3 and bla
   _.extend = function(obj) {
+    var args = Array.prototype.slice.call(arguments,1);
+    _.each(args, function(one_obj) {
+      if (one_obj) {
+        for (var prop in one_obj) {
+          obj[prop] = one_obj[prop];
+        }
+      }
+    });
+    return obj;
   };
 
   // Like extend, but doesn't ever overwrite a key that already
   // exists in obj
   _.defaults = function(obj) {
+    var args = Array.prototype.slice.call(arguments,1);
+    _.each(args, function(one_obj) {
+      if (one_obj) {
+        for (var prop in one_obj) {
+          if (!obj.hasOwnProperty(prop)) {
+            obj[prop] = one_obj[prop];
+          }
+        }
+      }
+    });
+    return obj;
   };
 
 
@@ -238,7 +275,7 @@ dog['toUpperCase'].apply(dog,args);
     return function() {
       if (!alreadyCalled) {
         // TIP: .apply(this, arguments) is the standard way to pass on all of the
-        // infromation from one function call to another.
+        // information from one function call to another.
         result = func.apply(this, arguments);
         alreadyCalled = true;
       }
@@ -254,6 +291,14 @@ dog['toUpperCase'].apply(dog,args);
   // already computed the result for the given argument and return that value
   // instead if possible.
   _.memoize = function(func) {
+    // stores my results
+    var results = {};
+    return function(param) {
+      if (!results.hasOwnProperty(param)) {
+        results[param] = func(param);
+      }
+      return results[param];
+    };
   };
 
   // Delays a function for the given number of milliseconds, and then calls
@@ -263,6 +308,10 @@ dog['toUpperCase'].apply(dog,args);
   // parameter. For example _.delay(someFunction, 500, 'a', 'b') will
   // call someFunction('a', 'b') after 500ms
   _.delay = function(func, wait) {
+    var args = Array.prototype.slice.call(arguments,2);
+    return setTimeout(function() {
+      return func.apply(this, args);
+    }, wait);
   };
 
 
@@ -277,6 +326,15 @@ dog['toUpperCase'].apply(dog,args);
   // input array. For a tip on how to make a copy of an array, see:
   // http://mdn.io/Array.prototype.slice
   _.shuffle = function(array) {
+    var shuffled_array = [];
+    var rand;
+    _.each(shuffled_array, function(val,index,arr) {
+      rand = Math.floor(Math.random()*(index+1));
+      //essentially randomly trading places with values, through each iteration
+      shuffled_array[index] = shuffled_array[rand];
+      shuffled_array[rand] = val;
+    })
+    return shuffled_array;
   };
 
 
