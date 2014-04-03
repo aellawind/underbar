@@ -447,43 +447,36 @@ var _ = { };
   //
   // See the Underbar readme for details.
   _.throttle = function(func, wait) {
-    var triggered = false;
+    var one_waiting = false;
     var current_ans;
-    var now = Date.now();
-    var new_now, diff;
+    var last_called = wait;
 
-    // amira:don't forget to pass the arguments from the throttled function to the origina function
+  //Whenever date.now - last_call is less than delay, 
+  //then i should set a timeout for it, rather than actually calling it
     return function() {
 
-      var args = arguments;
-      // If the function hasn't been triggered at this point, just trigger it
-      if (!triggered) {
-        current_ans = func.apply(this, args);
-        triggered = true;
+      var args = arguments; // Want to pass any arguments to the function
+      
+      // if the current time minus the time it was last called is less than wait time,
+      // then I need to set a time out for it
+      var diff = Date.now()-last_called;
+      if (!one_waiting && diff <= wait) {
+        one_waiting = true;
         setTimeout(function() {
-          triggered = false;
-          now = Date.now();
-        }, wait);
-      } else if (triggered) {
-        new_now = Date.now();
-        diff = new_now-now; //the difference in ms between now and when it was last called
-        if (diff <= wait) {
-          setTimeout(function() {
-            current_ans = func.apply(this,args);
-            triggered = false;
-            now = Date.now();
-          }, wait-diff);
-        } else {
-          current_ans = func.apply(this.args);
-          now = Date.now();
-        }
+          current_ans = func.apply(this,args);
+          last_called = Date.now();
+          one_waiting = false;
+        }, wait-diff);
+      } else if (!one_waiting) {
+        current_ans = func.apply(this,args);
+        last_called = Date.now();
       }
 
-        // return the current answer regardless of what's happening
-        return current_ans;
-    };
-     
+      // always return the answer
+      return current_ans;
+    }
 
   };
+     
 
 }).call(this);
