@@ -447,10 +447,42 @@ var _ = { };
   //
   // See the Underbar readme for details.
   _.throttle = function(func, wait) {
+    var triggered = false;
+    var current_ans;
+    var now = Date.now();
+    var new_now, diff;
 
-   
+    // amira:don't forget to pass the arguments from the throttled function to the origina function
+    return function() {
 
-    
+      var args = arguments;
+      // If the function hasn't been triggered at this point, just trigger it
+      if (!triggered) {
+        current_ans = func.apply(this, args);
+        triggered = true;
+        setTimeout(function() {
+          triggered = false;
+          now = Date.now();
+        }, wait);
+      } else if (triggered) {
+        new_now = Date.now();
+        diff = new_now-now; //the difference in ms between now and when it was last called
+        if (diff <= wait) {
+          setTimeout(function() {
+            current_ans = func.apply(this,args);
+            triggered = false;
+            now = Date.now();
+          }, wait-diff);
+        } else {
+          current_ans = func.apply(this.args);
+          now = Date.now();
+        }
+      }
+
+        // return the current answer regardless of what's happening
+        return current_ans;
+    };
+     
 
   };
 
